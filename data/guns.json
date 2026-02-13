@@ -122,6 +122,12 @@
         "image": "love_bazooka.png"
     },
     {
+        "id": 28,
+        "name": "FlatLine5",
+        "rarity": "ancient",
+        "image": "flatline.png"
+    }
+    {
         "id": 27,
         "name": "FlatLine4",
         "rarity": "ancient",
