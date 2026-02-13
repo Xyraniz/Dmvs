@@ -18,7 +18,6 @@ let allData = [];
 let filteredData = [];
 let currentPage = 1;
 let isLoading = false;
-let hasMore = true;
 let observer = null;
 let searchTimeout = null;
 let savedState = null;
@@ -144,6 +143,11 @@ function updateLoadMore() {
     if (hasMoreItems) {
         container.classList.remove('hidden');
         btn.disabled = false;
+        btn.textContent = 'CARGAR MÁS';
+    } else if (filteredData.length > 0) {
+        container.classList.remove('hidden');
+        btn.disabled = true;
+        btn.textContent = 'ESAS SON TODAS';
     } else {
         container.classList.add('hidden');
     }
@@ -185,7 +189,7 @@ function updateStatus(count) {
 }
 
 function loadMore() {
-    if (isLoading || !hasMore) return;
+    if (isLoading || filteredData.length <= currentPage * CONFIG.PAGE_SIZE) return;
     isLoading = true;
     const btn = document.getElementById('load-more-button');
     btn.disabled = true;
@@ -195,8 +199,6 @@ function loadMore() {
         currentPage++;
         renderPage(currentPage);
         isLoading = false;
-        btn.disabled = false;
-        btn.textContent = 'CARGAR MÁS';
         updateLoadMore();
     }, 320);
 }
@@ -292,42 +294,56 @@ function restoreState() {
     }
 }
 
-async function init() {
-    currentCategory = getCategory();
-    document.getElementById('category-title').textContent = getCategoryTitle(currentCategory);
-
+async function loadData() {
     const jsonUrl = `../data/${currentCategory}.json`;
+    const skel = document.getElementById('skeleton-container');
+    const err = document.getElementById('error-state');
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty-state');
 
-    document.getElementById('skeleton-container').classList.remove('hidden');
+    err.classList.add('hidden');
+    empty.classList.add('hidden');
+    grid.classList.add('hidden');
+    skel.classList.remove('hidden');
     renderSkeletons(12);
 
     try {
         const rawData = await fetchData(jsonUrl);
         allData = rawData.filter(validateItem);
-        document.getElementById('skeleton-container').classList.add('hidden');
-
+        skel.classList.add('hidden');
         restoreState();
         filterAndRender();
-
         if (allData.length > CONFIG.PAGE_SIZE) {
             setupInfiniteScroll();
         }
-
         setTimeout(() => {
             if (savedState && savedState.scroll) {
                 window.scrollTo({ top: savedState.scroll, behavior: 'instant' });
             }
         }, 120);
-
-    } catch (err) {
-        document.getElementById('skeleton-container').classList.add('hidden');
-        document.getElementById('error-state').classList.remove('hidden');
+    } catch (e) {
+        skel.classList.add('hidden');
+        err.classList.remove('hidden');
     }
+}
+
+async function init() {
+    currentCategory = getCategory();
+    document.getElementById('category-title').textContent = getCategoryTitle(currentCategory);
+
+    await loadData();
 
     setupSearch();
     setupLoadMoreButton();
     setupModal();
     setupKeyboard();
+
+    document.getElementById('clear-search').addEventListener('click', () => {
+        document.getElementById('search-input').value = '';
+        filterAndRender();
+    });
+
+    document.getElementById('retry-button').addEventListener('click', loadData);
 
     window.addEventListener('beforeunload', saveState);
 
