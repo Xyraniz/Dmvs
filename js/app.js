@@ -10,7 +10,9 @@ const RARITY_MAP = {
     rare: 'rare',
     legendary: 'legendary',
     mythic: 'mythic',
-    ancient: 'ancient'
+    ancient: 'ancient',
+    unknown: 'unknown',
+    special: 'special'
 };
 
 let currentCategory = '';
